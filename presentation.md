@@ -1,99 +1,96 @@
 ---
 marp: true
 ---
-hi
-I am scott
-This is a presentation!
+# Enums all the way down
+
+A C++ Story by Scott Rytting
 
 ---
 
-So... why use enums in the first place?
-- Let's say we're building embedded software to control a jukebox.
-- The jukebox plays songs
-- We're writing software that should take a song requested by the user and actually play it
+- I learned programming from the bottom up
+    - Logic gates -> machine code -> assembly
+- I also learned programming through spreadsheets
+- I started writing C++ 3 years ago when I started my internship at Keysight
+    - Immediately started in a crash course of all the ways C++ is different
+    - Initializer lists were spooky
+    - So much new syntax, so many ::
 
 ---
-
-**Simple approach: filenames as strings!**
-```cpp
-userRequest = "SongName";
-
-playSong("SongName.mp3"); //or some other way to identify *where* the song is
-```
-
-This has some advantages.
-- flexible
-- straightforward
-
-But also has some disadvantages
-- We can ask for invalid states
-
----
-
-Let's say there are only 10 songs we can play.
-... explain more why here
-
----
-
-Enums are ways to have a mutually exclusive set of related things, and that's nice!
-Encoding more information in the type system is always nice.
-
----
-
-How can we map from one enum to another?
-A simple, efficient way:
-```cpp
-static_cast<DriverSongId>(Song::SongName);
-```
-
-but... there's nothing guaranteeing that these enums will be in order.
 
 ```cpp
-enum class Song{
-    SongA,
-    SongB,
-    SongC
-}
+enum class ConfigId{
+    Temperature,
+    Humidity,
+    Schedule
+};
 
-enum class DriverSongId{
-    SongA,
-    SongC,
-    SongB
+class Schedule{
+    //...
+};
+
+using ThermostatConfig = Configurable{
+    {ConfigId::Temperature, double{0}},
+    {ConfigId::Humidity, int{0}},
+    {ConfigId::Schedule, Schedule{}}
 }
 ```
 
----
-
-Nor is there anything guaranteeing that they'll all be valid
-
-```cpp
-enum class Song{
-    SongA,
-    SongB,
-    SongC
-}
-
-enum class DriverSongId{
-    SongA,
-    SongB
-}
-```
-
+This meant I saw a *lot* of enums
 
 ---
 
-```cpp
-std::map<EnumA, EnumB> translateEnum{
-    {EnumA::First, EnumB::First},
-    {EnumA::Second, EnumB::Second},
-    //...and so on
-}
-```
+It also meant I saw a lot of ways to convert between enums...
 
 ```cpp
-setConfig(translateEnum.at(EnumA::First));
+enum class InterfaceConfig{
+    Temperature,
+    Humidity,
+    Schedule
+};
+
+// How to get from A to B?
+
+enum class DriverConfig{
+    Temperature,
+    Humidity,
+    Schedule
+};
 ```
 
 ---
 
-That approach might look very inefficient
+My first attempt:
+```cpp
+static_cast<DriverConfig>(InterfaceConfig::Temperature);
+```
+
+...which worked very well!
+(as long as both enums were exactly the same and in exactly the same order)
+
+...It turns out that doesn't happen very often
+
+Much to my dismay...
+
+---
+
+Fell back to the same way you would map any generic value to another:
+```cpp
+std::unordered_map<EnumA, EnumB>
+```
+
+---
+
+Enums are also nice as an unambiguous way to grab related values:
+
+Access::TriggerType -> Driver::DelayGroup -> Group value (abstracted from driver)
+
+First pass enum index
+
+-> proceed to be a sucker for syntax
+ - something something all of math is syntax sugar
+
+
+- Then started using std::source_location to determine valid enums (so the calling code didn't have to know specifically)
+
+- This is about when I broke builds on the CI pipeline for the first time
+    - Imagine my surprise that not all C++ compilers work exactly the same
