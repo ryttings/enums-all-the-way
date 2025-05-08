@@ -59,7 +59,7 @@ enum class DriverConfig{
 
 ---
 
-My first attempt:
+Of course, the first thing I tried:
 ```cpp
 static_cast<DriverConfig>(InterfaceConfig::Temperature);
 ```
@@ -73,10 +73,19 @@ Much to my dismay...
 
 ---
 
-Fell back to the same way you would map any generic value to another:
+The most common solution:
 ```cpp
 std::unordered_map<EnumA, EnumB>
 ```
+
+This has a couple things that frustrated me:
+- It isn't `constexpr`, which means it infects everything it touches to not be `constexpr`
+- It's obviously overkill for something so simple
+
+---
+
+So, I decided to give it a shot using C++ tools.
+
 
 ---
 
