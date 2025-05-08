@@ -97,3 +97,28 @@ setConfig(translateEnum.at(EnumA::First));
 ---
 
 That approach might look very inefficient
+
+---
+
+The idea of "Anonymous structs" can be useful, too.
+
+```cpp
+struct StateMachineIndex : Entry<uint8_t>{};
+struct CounterValue : Entry<uint64_t>{};
+
+constexpr auto getIndexedCounter(const uint64_t countTotal, const MachineMetadata& machine)
+{
+   const auto countBase = (countTotal >= wordSize) ? machine.symbolsPerWord : 0;
+   const uint8_t countIndex = (countTotal % wordSize) / machine.bitsPerSymbol;
+   const auto machineIndex = countBase + countIndex;
+   const auto counterValue = countTotal / wordSize;
+
+   return makeIndex(StateMachineIndex{machineIndex}, CounterValue{counterValue});
+}
+```
+
+---
+
+Enums -> Numbers
+as
+Strong Types -> Types
